@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import redisConfig, {
   type redisNamespace,
   redisNamespaceKey,
-} from '../config/redis.config';
-import jwtConfig from '../config/jwt.config';
-import { EventsGateway } from '../events.gateway';
-import RedisModule from '../redis/redis.module';
+} from './config/redis.config';
+import jwtConfig, {
+  type jwtNamespace,
+  jwtNamespaceKey,
+} from './config/jwt.config';
+import { SignController } from './sign.controller';
+import { EventsGateway } from './events.gateway';
+import RedisModule from './redis/redis.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -27,8 +30,14 @@ import RedisModule from '../redis/redis.module';
         url: `redis://${keyPrefix}:${password}@${host}:${port}`,
       }),
     }),
+    JwtModule.registerAsync({
+      inject: [jwtNamespaceKey],
+      useFactory: async ({ secret }: ConfigType<jwtNamespace>) => ({
+        secret,
+      }),
+    }),
   ],
-  controllers: [AppController],
-  providers: [AppService, EventsGateway],
+  controllers: [SignController],
+  providers: [EventsGateway],
 })
 export class AppModule {}

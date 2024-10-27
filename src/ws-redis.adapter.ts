@@ -3,22 +3,18 @@ import { Server, ServerOptions } from 'socket.io';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import type { INestApplication } from '@nestjs/common';
 import { createAdapter, type RedisAdapter } from '@socket.io/redis-adapter';
-import type { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import RedisService from './redis/redis.service';
-import { type jwtNamespace, jwtNamespaceKey } from './config/jwt.config';
 
 type AllowCallback = (
   error: string | null | undefined,
   success: boolean,
 ) => void;
 
-export default class SocketIoRedisAdapter extends IoAdapter {
+export default class WsRedisAdapter extends IoAdapter {
   protected readonly redisAdapter: (nsp: unknown) => RedisAdapter;
 
   private readonly jwtService: JwtService;
-
-  private readonly accessSecret: string;
 
   constructor(app: INestApplication) {
     super(app);
@@ -26,17 +22,15 @@ export default class SocketIoRedisAdapter extends IoAdapter {
     const redisService = app.get<RedisService>(RedisService);
     const pubClient = redisService.getClient();
     const subClient = pubClient.duplicate();
-
-    this.accessSecret =
-      app.get<ConfigType<jwtNamespace>>(jwtNamespaceKey).accessSecret;
     this.jwtService = app.get<JwtService>(JwtService);
     this.redisAdapter = createAdapter(pubClient, subClient);
   }
 
   createIOServer(port: number, options?: ServerOptions): Server {
-    const server = super.create(port, {
+    const server: Server = super.createIOServer(port, {
       ...options,
-      allowRequest: (req, cb) => this.allowRequest(req, cb),
+      allowRequest: (req: IncomingMessage, cb: AllowCallback) =>
+        this.allowRequest(req, cb),
       cors: { origin: '*' },
     });
 
@@ -49,14 +43,15 @@ export default class SocketIoRedisAdapter extends IoAdapter {
     request: IncomingMessage,
     callback: AllowCallback,
   ): void {
-    const token = request.headers.authorization?.split(' ')[1];
+    const url = new URL(request.url, 'http://base');
+    const token = url.searchParams.get('token').split(' ')[1];
 
     if (!token) {
       return callback('token is missing', false);
     }
 
     try {
-      this.jwtService.verify(token, { secret: this.accessSecret });
+      this.jwtService.verify(token);
 
       return callback(null, true);
     } catch (error: unknown) {

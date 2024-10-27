@@ -1,7 +1,7 @@
 import { RedisClientOptions } from '@redis/client';
 import { Global, Module, Provider } from '@nestjs/common';
-import { IRedisModuleAsyncOptions } from '@v1/redis/interfaces/redis-module-async-options.interface';
-import RedisService from '@v1/redis/redis.service';
+import RedisService from './redis.service';
+import type { IRedisModuleAsyncOptions } from './interfaces/redis-module-async-options.interface';
 
 @Global()
 @Module({})

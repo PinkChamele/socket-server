@@ -1,10 +1,16 @@
 import { createClient } from 'redis';
-import { RedisClientOptions } from '@redis/client';
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import type { RedisClientOptions } from '@redis/client';
+import {
+  Injectable,
+  type OnModuleDestroy,
+  type OnModuleInit,
+} from '@nestjs/common';
+
+type DefaultRedisClient = ReturnType<typeof createClient>;
 
 @Injectable()
 export default class RedisService implements OnModuleInit, OnModuleDestroy {
-  private readonly redisClient;
+  private readonly redisClient: DefaultRedisClient;
 
   constructor(serviceOptions: RedisClientOptions) {
     this.redisClient = createClient(serviceOptions);
@@ -14,11 +20,11 @@ export default class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.redisClient;
   }
 
-  onModuleInit() {
-    this.redisClient.connect();
+  async onModuleInit() {
+    await this.redisClient.connect();
   }
 
-  onModuleDestroy() {
-    this.redisClient.disconnect();
+  async onModuleDestroy() {
+    await this.redisClient.disconnect();
   }
 }
