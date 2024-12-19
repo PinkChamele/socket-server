@@ -7,11 +7,11 @@ import {
   MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import type { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: { origin: '*' },
-  namespace: 'rtc',
+  namespace: 'io',
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -33,6 +33,20 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     console.log(`Broadcasting from ${client.id}: ${message}`);
-    client.emit('broadcast', { message });
+    this.server.emit('broadcast', { message });
+  }
+
+  @SubscribeMessage('message')
+  handleMessage(@MessageBody() { message }: { message: unknown }) {
+    return message;
+  }
+
+  @SubscribeMessage('ping')
+  async handlePing() {
+    const delay = Math.floor(Math.random() * 1000) + 100;
+
+    await new Promise((resolve) => setTimeout(resolve, delay));
+
+    return {};
   }
 }

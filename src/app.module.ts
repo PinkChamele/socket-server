@@ -21,7 +21,7 @@ import { JwtModule } from '@nestjs/jwt';
     }),
     RedisModule.forRootAsync({
       inject: [redisNamespaceKey],
-      useFactory: async ({
+      useFactory: ({
         host,
         port,
         password,
@@ -32,9 +32,7 @@ import { JwtModule } from '@nestjs/jwt';
     }),
     JwtModule.registerAsync({
       inject: [jwtNamespaceKey],
-      useFactory: async ({ secret }: ConfigType<jwtNamespace>) => ({
-        secret,
-      }),
+      useFactory: (config: ConfigType<jwtNamespace>) => config,
     }),
   ],
   controllers: [SignController],

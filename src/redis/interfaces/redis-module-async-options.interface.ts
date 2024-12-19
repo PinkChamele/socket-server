@@ -1,6 +1,11 @@
-import { RedisClientOptions } from '@redis/client';
-import { ForwardReference, Type } from '@nestjs/common';
-import { DynamicModule } from '@nestjs/common/interfaces/modules/dynamic-module.interface';
+import type { RedisClientOptions } from '@redis/client';
+import type {
+  Type,
+  ForwardReference,
+  InjectionToken,
+  DynamicModule,
+  OptionalFactoryDependency,
+} from '@nestjs/common';
 
 export interface IRedisModuleAsyncOptions {
   imports?: (
@@ -9,6 +14,8 @@ export interface IRedisModuleAsyncOptions {
     | Promise<DynamicModule>
     | ForwardReference
   )[];
-  inject?: any[];
-  useFactory: (...args: any[]) => Promise<RedisClientOptions>;
+  inject?: (InjectionToken | OptionalFactoryDependency)[];
+  useFactory: (
+    ...args: unknown[]
+  ) => RedisClientOptions | Promise<RedisClientOptions>;
 }
